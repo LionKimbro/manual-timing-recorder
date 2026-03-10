@@ -1,0 +1,239 @@
+{
+  "document": {
+    "document-id": "tkinter-timing-capture.spec.v1",
+    "title": "Tkinter Timing Capture Tool",
+    "purpose": "Small tkinter program that records user keypress timing signals with millisecond precision and exports them as JSON.",
+    "type": {
+      "logical": {
+        "base": "specification",
+        "format": "json",
+        "encoding": "utf-8"
+      }
+    },
+    "chat-gpt": "https://chatgpt.com/c/69b0a934-5eb4-832d-a61a-7bbe4630c83f"
+  },
+
+  "overview": {
+    "description": "A minimal tkinter program used to capture timing signals from keyboard input. The user presses keys at meaningful moments and the system records the key and the timestamp relative to the start of recording.",
+    "core_features": [
+      "Keyboard timing capture with millisecond precision",
+      "Display of captured events in a Tree control",
+      "Recording start and stop controls",
+      "Optional normalization so first key becomes t=0",
+      "Export to JSON format"
+    ]
+  },
+
+  "allowed_keys": {
+    "letters": "A-Z",
+    "numbers": "0-9",
+    "function_keys": "F1-F12",
+    "space": "SPACE",
+    "case_handling": "letters are normalized to uppercase"
+  },
+
+  "internal_time_model": {
+    "description": "All timestamps are measured relative to the moment recording begins.",
+    "representation": "floating point seconds",
+    "source": "time.perf_counter()",
+    "precision": "millisecond resolution or better",
+    "note": "perf_counter is monotonic and suitable for relative timing measurements"
+  },
+
+  "state_model": {
+    "states": [
+      "IDLE",
+      "RECORDING",
+      "STOPPED"
+    ],
+    "transitions": [
+      {
+        "from": "IDLE",
+        "to": "RECORDING",
+        "trigger": "Record button pressed"
+      },
+      {
+        "from": "RECORDING",
+        "to": "STOPPED",
+        "trigger": "Stop button pressed"
+      },
+      {
+        "from": "STOPPED",
+        "to": "RECORDING",
+        "trigger": "Record button pressed again (clears previous timings)"
+      }
+    ]
+  },
+
+  "data_model": {
+    "timing_record": {
+      "fields": {
+        "timestamp_seconds": "float",
+        "key": "string"
+      }
+    },
+
+    "timings_collection": {
+      "type": "list",
+      "contents": "timing_record"
+    }
+  },
+
+  "ui_layout": {
+    "window_title": "Timing Capture",
+    "main_components": [
+
+      {
+        "type": "menu_bar",
+        "menus": [
+          {
+            "name": "File",
+            "items": [
+              {
+                "label": "Export Timings",
+                "accelerator": "Ctrl+E",
+                "action": "export_timings"
+              },
+              {
+                "separator": true
+              },
+              {
+                "label": "Quit",
+                "accelerator": "Ctrl+Q",
+                "action": "quit_application"
+              }
+            ]
+          },
+          {
+            "name": "Edit",
+            "items": [
+              {
+                "label": "Normalize On First Key",
+                "type": "checkbutton",
+                "variable": "normalize_on_first_key"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "toolbar",
+        "buttons": [
+          {
+            "label": "Record",
+            "action": "start_recording"
+          },
+          {
+            "label": "Stop",
+            "action": "stop_recording"
+          }
+        ]
+      },
+
+      {
+        "type": "treeview",
+        "id": "timing_tree",
+        "columns": [
+          {
+            "name": "key",
+            "heading": "Key"
+          },
+          {
+            "name": "timestamp",
+            "heading": "Timestamp (mm:ss:ms)"
+          }
+        ]
+      }
+    ]
+  },
+
+  "display_formatting": {
+    "timestamp_display_format": "MM:SS:MMM",
+    "rules": {
+      "minutes": "0-59",
+      "seconds": "0-59",
+      "milliseconds": "0-999"
+    },
+    "example": "02:14:237"
+  },
+
+  "key_capture_logic": {
+    "conditions": [
+      "Application must be in RECORDING state",
+      "Pressed key must be in allowed_keys set"
+    ],
+
+    "processing_steps": [
+      "Capture current time using perf_counter",
+      "Compute elapsed_seconds = current_time - recording_start_time",
+      "Normalize key representation",
+      "Append (elapsed_seconds, key) to timings list",
+      "Insert formatted record into treeview"
+    ]
+  },
+
+  "normalize_on_first_key_behavior": {
+    "description": "When enabled, the timestamp of the first recorded key becomes time zero.",
+    "logic": [
+      "Record normally relative to recording start",
+      "After first key event occurs, subtract its timestamp from all stored timestamps",
+      "Update treeview display to reflect normalized times",
+      "Subsequent key events subtract the same offset"
+    ]
+  },
+
+  "treeview_behavior": {
+    "columns": [
+      "Key",
+      "Timestamp"
+    ],
+    "row_insert_behavior": "append row for each captured timing",
+    "sorting": "none",
+    "selection": "optional"
+  },
+
+  "export_format": {
+    "file_type": "JSON",
+    "encoding": "utf-8",
+    "structure": {
+      "document": {
+        "document-id": "generated-timings.<UUID>",
+        "purpose": "blank",
+        "title": "Untitled",
+        "type": {
+          "logical": {
+            "base": "file",
+            "format": "json",
+            "encoding": "utf-8",
+            "format_version": "timings.v1"
+          }
+        }
+      },
+      "timings": [
+        "(timestamp_seconds, key)"
+      ]
+    }
+  },
+
+  "keyboard_binding": {
+    "binding_scope": "root window",
+    "binding_type": "KeyPress",
+    "handler": "handle_keypress"
+  },
+
+  "menu_shortcuts": {
+    "Ctrl+E": "export_timings",
+    "Ctrl+Q": "quit_application"
+  },
+
+  "core_functions": [
+    "start_recording()",
+    "stop_recording()",
+    "handle_keypress(event)",
+    "format_timestamp(seconds)",
+    "insert_tree_row(key, seconds)",
+    "normalize_timings()",
+    "export_timings()"
+  ]
+}

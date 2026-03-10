@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "manual-timing-recorder"
+version = "0.1.0"
+description = "Record timing data, store into a JSON file."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "CC0-1.0" }
+dependencies = [
+  "lionscliapp",
+]
+
+[project.scripts]
+mtr = "manual_timing_recorder.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
